@@ -51,18 +51,24 @@ jobs:
           echo "$SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
           echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
-          yes | "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_ROOT" --licenses >/dev/null
+
+          set +o pipefail
+          yes 2>/dev/null | "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+          set -o pipefail
+
           "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK_ROOT" \
             "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;23.2.8568313"
           echo "ANDROID_NDK_ROOT=$SDK_ROOT/ndk/23.2.8568313" >> "$GITHUB_ENV"
 
       - name: Export APK
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p build
           godot --headless --path . --export-debug "Android" build/north-raid.apk
           test -s build/north-raid.apk
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: north-raid-android-apk
